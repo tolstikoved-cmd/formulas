@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0d14">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Формулы — справочник по 5 предметам</title>
+
+<link rel="icon" href="data:,">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="bg-mesh" aria-hidden="true">
+  <div class="bg-mesh__blob bg-mesh__blob--1"></div>
+  <div class="bg-mesh__blob bg-mesh__blob--2"></div>
+  <div class="bg-mesh__blob bg-mesh__blob--3"></div>
+</div>
+<div class="bg-noise" aria-hidden="true"></div>
+
+<!-- ===== ДИАЛОГ ВЫБОРА УСТРОЙСТВА ===== -->
+<div class="device-modal" id="deviceModal" hidden>
+  <div class="device-modal__inner">
+    <h2 class="device-modal__title">Выберите версию</h2>
+    <p class="device-modal__sub">Как вам удобнее работать?</p>
+    <div class="device-modal__options">
+      <button class="device-modal__option" data-device="mobile" type="button">
+        <span class="device-modal__icon">📱</span>
+        <span class="device-modal__name">Телефон</span>
+        <span class="device-modal__hint">Крупные кнопки, узкий экран</span>
+      </button>
+      <button class="device-modal__option" data-device="desktop" type="button">
+        <span class="device-modal__icon">💻</span>
+        <span class="device-modal__name">Компьютер</span>
+        <span class="device-modal__hint">Полный интерфейс, сайдбар</span>
+      </button>
+    </div>
+    <p class="device-modal__note">Выбор запомнится. Сменить можно в шапке (📱/💻).</p>
+  </div>
+</div>
+
+<header class="header">
+  <div class="container header__inner">
+    <button class="burger" id="burger" aria-label="Меню">☰</button>
+    <a class="logo" href="#" id="logo">Формулы</a>
+    <button class="icon-btn nav-arrow" id="navBack" type="button" title="Назад">←</button>
+    <button class="icon-btn nav-arrow" id="navForward" type="button" title="Вперёд">→</button>
+    <div class="search-wrap">
+      <input type="search" id="search" class="search" placeholder="Поиск…" autocomplete="off">
+      <button class="search-mic" id="searchMic" type="button" title="Голосовой поиск">🎤</button>
+      <div class="suggest" id="suggest"></div>
+    </div>
+    <div class="header__tools">
+      <button class="tab-btn" id="tabAll" title="Все разделы">Все</button>
+      <button class="tab-btn" id="tabFormulas">Формулы</button>
+      <button class="tab-btn" id="tabRef">Справочник</button>
+      <button class="tab-btn" id="tabTerms">Термины</button>
+      <button class="tab-btn" id="tabFav">★</button>
+      <button class="tab-btn" id="tabFlash">Тренировка</button>
+      <button class="icon-btn" id="sidebarToggle" title="Скрыть панель">▤</button>
+      <button class="icon-btn" id="splitBtn" title="Split view">◫</button>
+      <button class="icon-btn" id="goalBtn" title="Цель обучения">🎯</button>
+      <button class="icon-btn" id="soundToggle" title="Звуки">🔊</button>
+      <button class="icon-btn" id="deviceToggle" title="Сменить версию">💻</button>
+      <button class="icon-btn" id="fontMinus" title="Меньше">A−</button>
+      <button class="icon-btn" id="fontReset" title="Обычный">A</button>
+      <button class="icon-btn" id="fontPlus" title="Больше">A+</button>
+      <button class="icon-btn" id="fullscreenBtn" title="Полный экран">⛶</button>
+      <button class="icon-btn" id="printBtn" title="Печать">🖨</button>
+      <button class="icon-btn" id="themeToggle" title="Тема">🌙</button>
+    </div>
+  </div>
+</header>
+
+<div class="backdrop" id="backdrop"></div>
+<div class="toast" id="toast"></div>
+<button class="to-top" id="toTop" title="Наверх">↑</button>
+
+<div class="voice-overlay" id="voiceOverlay">
+  <div class="voice-overlay__dot"></div>
+  <div style="flex:1;">
+    <div class="voice-overlay__text" id="voiceText">Слушаю…</div>
+    <div class="voice-overlay__hint">Скажите название формулы. Esc — отменить.</div>
+  </div>
+  <button class="btn" id="voiceStopBtn" type="button">Стоп</button>
+</div>
+
+<div class="compare-bar" id="compareBar">
+  <span class="compare-bar__count" id="compareCount">Выбрано: 0</span>
+  <span class="compare-bar__titles" id="compareTitles"></span>
+  <button class="compare-bar__btn" id="compareOpen" type="button">Сравнить</button>
+  <button class="compare-bar__btn compare-bar__btn--ghost" id="compareClear" type="button">Сбросить</button>
+</div>
+
+<div class="modal" id="compareModal">
+  <div class="modal__inner">
+    <div class="modal__head">
+      <h2 class="modal__title">Сравнение формул</h2>
+      <button class="modal__close" id="compareModalClose" type="button">✕</button>
+    </div>
+    <div class="compare-grid" id="compareGrid"></div>
+  </div>
+</div>
+
+<div class="modal" id="solveModal">
+  <div class="modal__inner" style="max-width:640px;">
+    <div class="modal__head">
+      <h2 class="modal__title" id="solveTitle">Пошаговое решение</h2>
+      <button class="modal__close" id="solveModalClose" type="button">✕</button>
+    </div>
+    <p class="solve-modal__desc" id="solveDesc"></p>
+    <div class="solve-modal__formula" id="solveFormula" data-tex=""></div>
+    <div class="solve-modal__vars" id="solveVars"></div>
+    <div class="solve-modal__actions">
+      <button class="btn btn--solve" id="solveRun" type="button">Показать решение</button>
+      <button class="btn" id="solveReset" type="button">Сбросить</button>
+    </div>
+    <div id="solveOutput" style="margin-top:16px;"></div>
+  </div>
+</div>
+
+<div class="modal" id="qrModal">
+  <div class="modal__inner" style="max-width:480px;">
+    <div class="modal__head">
+      <h2 class="modal__title">QR-код формулы</h2>
+      <button class="modal__close" id="qrModalClose" type="button">✕</button>
+    </div>
+    <div class="qr-modal__canvas-wrap">
+      <div class="qr-modal__canvas" id="qrCanvas"></div>
+      <div class="qr-modal__url" id="qrUrl"></div>
+      <div class="qr-modal__actions">
+        <button class="btn" id="qrCopyUrl" type="button">📋 Скопировать ссылку</button>
+        <button class="btn" id="qrDownload" type="button">💾 Скачать PNG</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="reverseModal">
+  <div class="modal__inner" style="max-width:640px;">
+    <div class="modal__head">
+      <h2 class="modal__title" id="reverseTitle">Как найти переменную?</h2>
+      <button class="modal__close" id="reverseModalClose" type="button">✕</button>
+    </div>
+    <p class="reverse-modal__desc" id="reverseDesc"></p>
+    <div class="reverse-modal__formula" id="reverseFormula" data-tex=""></div>
+    <div class="reverse-modal__label">Выберите, что нужно найти:</div>
+    <div class="reverse-modal__list" id="reverseList"></div>
+  </div>
+</div>
+
+<div class="modal" id="deriveModal">
+  <div class="modal__inner" style="max-width:720px;">
+    <div class="modal__head">
+      <h2 class="modal__title" id="deriveTitle">Вывод формулы</h2>
+      <button class="modal__close" id="deriveModalClose" type="button">✕</button>
+    </div>
+    <p class="solve-modal__desc" id="deriveDesc"></p>
+    <div class="derive-modal__chain" id="deriveChain"></div>
+  </div>
+</div>
+
+<div class="modal" id="goalModal">
+  <div class="modal__inner" style="max-width:560px;">
+    <div class="modal__head">
+      <h2 class="modal__title">Цель обучения</h2>
+      <button class="modal__close" id="goalModalClose" type="button">✕</button>
+    </div>
+    <div class="goal-widget" id="goalWidget"></div>
+  </div>
+</div>
+
+<div class="container layout" id="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__title">Разделы</div>
+    <div class="sidebar__tools">
+      <button class="sidebar__btn" id="expandAll" type="button">⊞ Развернуть всё</button>
+      <button class="sidebar__btn" id="collapseAll" type="button">⊟ Свернуть всё</button>
+    </div>
+    <nav class="nav" id="nav"></nav>
+  </aside>
+  <main class="content">
+
+    <section id="viewCatalog" hidden>
+      <h1 class="content__title">Все разделы</h1>
+      <p class="content__subtitle">Выберите предмет, затем тему — откроются формулы</p>
+      <div class="catalog" id="catalog"></div>
+    </section>
+
+    <section id="viewFormulas" hidden>
+      <div class="breadcrumbs" id="breadcrumbs"></div>
+      <h1 class="content__title" id="contentTitle">Все формулы</h1>
+      <p class="content__subtitle" id="contentSubtitle"></p>
+      <div class="toolbar">
+        <div class="toolbar__group">
+          <span class="toolbar__label">Вид:</span>
+          <button class="btn is-active" data-view="grid" type="button">Сетка</button>
+          <button class="btn" data-view="rows" type="button">Список</button>
+        </div>
+        <div class="toolbar__group">
+          <span class="toolbar__label">Сортировка:</span>
+          <button class="btn is-active" data-sort="default" type="button">По темам</button>
+          <button class="btn" data-sort="alpha" type="button">По алфавиту</button>
+        </div>
+        <div class="toolbar__group">
+          <span class="toolbar__label">Показ:</span>
+          <button class="btn is-active" data-learn="all" type="button">Все</button>
+          <button class="btn" data-learn="notlearned" type="button">Не выучено</button>
+        </div>
+      </div>
+      <div class="chips" id="chips">
+        <button class="chip" data-chip="fav" type="button">★ Избранное</button>
+        <button class="chip" data-chip="learned" type="button">✓ Выучено</button>
+        <button class="chip" data-chip="easy" type="button">🟢 Базовый</button>
+        <button class="chip" data-chip="medium" type="button">🟡 Средний</button>
+        <button class="chip" data-chip="hard" type="button">🔴 Продвинутый</button>
+      </div>
+      <div id="list"></div>
+      <p class="empty" id="empty" hidden>Ничего не найдено.</p>
+    </section>
+
+    <section id="viewRef" hidden>
+      <h1 class="content__title">Справочник</h1>
+      <p class="content__subtitle">Константы, единицы СИ и приставки</p>
+      <div class="ref-grid" id="refGrid"></div>
+    </section>
+
+    <section id="viewTerms" hidden>
+      <h1 class="content__title">Термины</h1>
+      <p class="content__subtitle">Определения ключевых понятий</p>
+      <div class="terms-list" id="termsList"></div>
+    </section>
+
+    <section id="viewFav" hidden>
+      <h1 class="content__title">Избранное</h1>
+      <p class="content__subtitle" id="favSubtitle"></p>
+      <div id="favList"></div>
+      <p class="empty" id="favEmpty" hidden>Пока ничего не добавлено.</p>
+    </section>
+
+    <section id="viewFlash" hidden>
+      <h1 class="content__title">Тренировка</h1>
+      <p class="content__subtitle" id="flashSubtitle"></p>
+      <div class="toolbar">
+        <div class="toolbar__group">
+          <button class="btn is-active" data-mode="flash" type="button">Флеш-карточки</button>
+          <button class="btn" data-mode="quiz" type="button">Викторина</button>
+        </div>
+      </div>
+      <div id="flashBox" class="flash-wrap">
+        <div class="flash-progress" id="flashProgress"></div>
+        <div class="flash-card">
+          <div class="flash-card__title" id="flashTitle"></div>
+          <div class="flash-card__answer" id="flashAnswer" data-tex="" hidden></div>
+          <div class="flash-card__desc" id="flashDesc" hidden></div>
+        </div>
+        <div class="flash-actions">
+          <button class="btn" id="flashShow" type="button">Показать ответ</button>
+          <button class="btn" id="flashNext" type="button">Дальше →</button>
+        </div>
+        <div class="flash-stats" id="flashStats"></div>
+        <button class="btn" id="flashRestart" type="button" style="margin-top:14px">Начать заново</button>
+      </div>
+      <div id="quizBox" class="quiz-wrap" hidden>
+        <div class="quiz-q" id="quizQuestion"></div>
+        <div class="quiz-options" id="quizOptions"></div>
+        <div class="quiz-stats" id="quizStats"></div>
+        <button class="btn" id="quizRestart" type="button" style="margin-top:14px">Начать заново</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer class="footer">
+  <div class="container">Справочник формул — физика, математика, химия, информатика, биология</div>
+</footer>
+
+<script defer src="data.js"></script>
+<script defer src="app.js"></script>
+</body>
+</html>
